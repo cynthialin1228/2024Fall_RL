@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import json
+import wandb
 
 from algorithms import (
     MonteCarloPrediction,
@@ -211,13 +212,74 @@ def run_Q_Learning(grid_world: GridWorld, iter_num: int):
 if __name__ == "__main__":
     seed = 1
     grid_world = init_grid_world("maze.txt",INIT_POS)
-    # 2-1
     run_MC_prediction(grid_world,seed)
     run_TD_prediction(grid_world,seed)
     run_NstepTD_prediction(grid_world,seed)
 
-    # 2-2
+    # # 2-2
     grid_world = init_grid_world("maze.txt")
     run_MC_policy_iteration(grid_world, 512000)
     run_SARSA(grid_world, 512000)
     run_Q_Learning(grid_world, 50000)
+
+    # # random generate 50 seeds
+    # seeds = np.random.randint(0, 10000, 50)
+    # MC_state_values = np.array([run_MC_prediction(grid_world,seed) for seed in seeds])
+    # TD_state_values = np.array([run_TD_prediction(grid_world,seed) for seed in seeds])
+    # # calculate the mean and variation of the state values
+    # np.save("./MC_state_values.npy", MC_state_values)
+    # np.save("./TD_state_values.npy", TD_state_values)
+    # MC_mean = np.mean(MC_state_values, axis=0)
+    # TD_mean = np.mean(TD_state_values, axis=0)
+    # # var = sum(state value - mean)^2 / n
+    # MC_var = np.sum((MC_state_values - MC_mean) ** 2, axis=0) / len(seeds)
+    # TD_var = np.sum((TD_state_values - TD_mean) ** 2, axis=0) / len(seeds)
+
+    # # save the mean and standard deviation of the state values
+    # np.save("./MC_mean.npy", MC_mean)
+    # np.save("./MC_var.npy", MC_var)
+    # np.save("./TD_mean.npy", TD_mean)
+    # np.save("./TD_var.npy", TD_var)
+
+    # # calculate the bias(mean - gt)
+    # gt = np.load("./sample_solutions/prediction_GT.npy")
+    # mc_mean = np.load("./MC_mean.npy")
+    # td_mean = np.load("./TD_mean.npy")
+    # mc_var = np.load("./MC_var.npy")
+    # td_var = np.load("./TD_var.npy")
+    # print(f"GT: {gt}\n")
+    # print(f"MC mean: {mc_mean}\n")
+    # print(f"TD mean: {td_mean}\n")
+    # print(f"MC var: {mc_var}\n")
+    # print(f"TD var: {td_var}\n")
+    
+    
+    # MC_bias = MC_mean - gt
+    # TD_bias = TD_mean - gt
+    # # visualize the mean and standard deviation of the state values
+    # grid_world.visualize(MC_bias, title=f"MC Prediction Bias", show=False, filename=f"MC_prediction_bias.png")
+    # grid_world.visualize(MC_var, title=f"MC Prediction var", show=False, filename=f"MC_prediction_var.png")
+    # grid_world.visualize(TD_bias, title=f"TD Prediction Bias", show=False, filename=f"TD_prediction_bias.png")
+    # grid_world.visualize(TD_var, title=f"TD Prediction var", show=False, filename=f"TD_prediction_var.png")
+
+    # for seed in seeds:
+        # wandb.init(project = "hw2", config = {"algorithm":"MC", "seed": seed})
+        # run_MC_prediction(grid_world,seed)
+        # wandb.finish()
+        # wandb.init(project = "hw2", config = {"algorithm":"TD", "seed": seed})
+        # run_TD_prediction(grid_world,seed)
+        # wandb.finish()
+
+    # Discuss and plot learning curves under 𝜖 values of (0.1, 0.2, 0.3, 0.4) on MC, SARSA, and Q-Learning (4%)
+    # grid_world = init_grid_world("maze.txt")
+    # for epsilon in [0.1, 0.2, 0.3, 0.4]:
+    # # for epsilon in [0.1]:
+    #     # wandb.init(project = "hw2", config = {"algorithm":"MC", "epsilon": epsilon})
+    #     # run_MC_policy_iteration(grid_world, 512000)
+    #     # wandb.finish()
+    #     # wandb.init(project = "hw2", config = {"algorithm":"SARSA", "epsilon": epsilon})
+    #     # run_SARSA(grid_world, 512000)
+    #     # wandb.finish()
+    #     wandb.init(project = "hw2", config = {"algorithm":"Q_Learning", "epsilon": epsilon})
+    #     run_Q_Learning(grid_world, 512000)
+    #     wandb.finish()
