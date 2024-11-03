@@ -437,8 +437,54 @@ class GridWorld:
         Returns:
             tuple: next_state, reward, done, truncation
         """
-        # TODO implement the step function here
-        raise NotImplementedError
+        if self._is_opened:
+            self._current_state -= len(self._state_list)
+        current_state_coord = self._state_list[self._current_state]
+        next_state_coord = self._get_next_state(current_state_coord, action)
+        reward = self.step_reward
+        done = False 
+        truncation = False 
+
+        if self._is_goal_state(current_state_coord):
+            reward = self._goal_reward
+            done = True 
+        elif self._is_key_state(current_state_coord):
+            reward = self.step_reward
+            self.open_door()
+
+        elif self._is_trap_state(current_state_coord):
+            reward = self._trap_reward
+            done = True 
+
+        elif self._is_exit_state(current_state_coord):
+            reward = self._exit_reward
+            done = True 
+
+        elif self._is_portal_state(current_state_coord):
+            reward = self.step_reward
+            # Handle portal transport if hitting a wall after the move
+            if not self._is_valid_state(next_state_coord):
+                next_state_coord = self.portal_next_state[current_state_coord]
+                next_state_index = self._state_list.index(next_state_coord)
+
+        if self._is_lava_state(next_state_coord):
+            reward = self.step_reward
+            done = True
+        elif self._is_bait_state(next_state_coord):
+            reward = self._bait_reward
+            self.bite()
+        next_state_index = self._state_list.index(next_state_coord)
+
+        self._step_count += 1
+        if self._step_count > self.max_step:
+            truncation = True
+        self._current_state = next_state_index
+        if self._is_opened:
+            next_state_index += len(self._state_list)
+            # print(f"Y current state: {current_state_coord}, next state: {next_state_coord}, action: {self.ACTION_INDEX_TO_STR[action]}, next_index: {next_state_index}")
+        # else:
+            # print(f"N current state: {current_state_coord}, next state: {next_state_coord}, action: {self.ACTION_INDEX_TO_STR[action]}, next_index: {next_state_index}")
+        return next_state_index, reward, done, truncation
 
     def reset(self) -> int:
         """Reset the environment
@@ -447,7 +493,23 @@ class GridWorld:
             int: initial state
         """
         # TODO implement the reset function here
-        raise NotImplementedError
+        # 1. Select one valid initial state. 
+        #   (1)not: Door, Key, Bait, Lava states 
+        #   (2)The initial state will be at the left of the Lava and Door.
+        # 2. Close the Door if the Door is opened. 
+        # 3. Place the bait back in the Bait state if it is bitten. 
+        # 4. Return the initial state
+
+        self._current_state = np.random.choice(self._init_states)
+        self._step_count = 0
+
+        if self._is_opened:
+            self.close_door()
+
+        if self._is_baited:
+            self.place_bait()
+
+        return self._current_state
 
     #############################
     # Visualize the environment #
